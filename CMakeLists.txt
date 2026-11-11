@@ -36,6 +36,25 @@ if(HPS3D160_MAX_WITH_ROS)
 endif()
 
 # --- SDK library ---
+# Recover the internal handle-array layout from the shipped binary so the
+# advanced (HE201_Api*) entry points can be used safely.
+set(HPS_SDK_SO ${HPS_SDK_LIB}/libHPS3DSDK64_1-8-6.so)
+if(EXISTS ${HPS_SDK_SO} AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/extract_sdk_layout.sh)
+    execute_process(
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/extract_sdk_layout.sh
+                ${HPS_SDK_SO}
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/hps3d160_max/generated/sdk_layout.h
+        RESULT_VARIABLE HPS_LAYOUT_RESULT
+        OUTPUT_VARIABLE HPS_LAYOUT_OUTPUT
+        ERROR_VARIABLE HPS_LAYOUT_ERROR
+    )
+    if(HPS_LAYOUT_RESULT EQUAL 0)
+        message(STATUS "SDK layout: ${HPS_LAYOUT_OUTPUT}")
+    else()
+        message(STATUS "SDK layout extraction skipped: ${HPS_LAYOUT_ERROR}")
+    endif()
+endif()
+
 add_library(hps_sdk STATIC
     ${HPS_SDK_INCLUDE}/HPS3DUser_IF.c
 )
@@ -55,13 +74,18 @@ file(GLOB HPS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/recorder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/health_monitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/multi_camera_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sdk_bridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/capability_probe.cpp
 )
 add_library(hps3d160_core STATIC ${HPS_CORE_SOURCES})
 target_include_directories(hps3d160_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/hps3d160_max
 )
-target_link_libraries(hps3d160_core PUBLIC hps_sdk)
+target_link_libraries(hps3d160_core PUBLIC hps_sdk ${CMAKE_DL_LIBS})
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/hps3d160_max/generated/sdk_layout.h)
+    target_compile_definitions(hps3d160_core PUBLIC HPS3D160_MAX_HAVE_SDK_LAYOUT=1)
+endif()
 if(HPS_HAVE_PCL)
     target_compile_definitions(hps3d160_core PUBLIC HPS3D160_MAX_WITH_PCL=1)
     target_include_directories(hps3d160_core PUBLIC ${PCL_INCLUDE_DIRS})

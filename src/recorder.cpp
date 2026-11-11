@@ -68,14 +68,52 @@ bool Recorder::writeCsv(const PointCloudFrame& frame) {
     csv_ << frame.frame_id << "," << ts << "," << frame.width << "," << frame.height << ","
          << frame.point_count << "," << frame.distance_average_mm << "," << frame.distance_min_mm << ","
          << frame.saturation_count << "," << frame.frame_counter << "," << valid << "\n";
-    // Append per-point file for full fidelity (optional, can be large)
-    std::string pts = cfg_.output_dir + "/frame_" + std::to_string(frame.frame_id) + ".xyz";
-    std::ofstream f(pts);
-    if (f) {
-        for (auto& p : frame.points) {
-            if (p.valid) f << p.x << " " << p.y << " " << p.z << " " << p.distance_mm << "\n";
+    const std::string base = cfg_.output_dir + "/frame_" + std::to_string(frame.frame_id);
+
+    // Per-point XYZ + distance (raw point cloud)
+    {
+        std::ofstream f(base + ".xyz");
+        if (f) {
+            for (auto& p : frame.points) {
+                if (p.valid) f << p.x << " " << p.y << " " << p.z << " " << p.distance_mm << "\n";
+            }
         }
     }
+
+    // Raw distance matrix (width x height), millimeters
+    {
+        std::ofstream f(base + ".distances.csv");
+        if (f) {
+            for (std::uint32_t y = 0; y < frame.height; ++y) {
+                for (std::uint32_t x = 0; x < frame.width; ++x) {
+                    std::size_t idx = static_cast<std::size_t>(y) * frame.width + x;
+                    if (idx < frame.points.size()) f << frame.points[idx].distance_mm;
+                    if (x + 1 < frame.width) f << ",";
+                }
+                f << "\n";
+            }
+        }
+    }
+
+    // Metadata JSON
+    {
+        std::ofstream f(base + ".meta.json");
+        if (f) {
+            f << "{\n";
+            f << "  \"frame_id\": " << frame.frame_id << ",\n";
+            f << "  \"timestamp_ms\": " << ts << ",\n";
+            f << "  \"width\": " << frame.width << ",\n";
+            f << "  \"height\": " << frame.height << ",\n";
+            f << "  \"point_count\": " << frame.point_count << ",\n";
+            f << "  \"valid_points\": " << valid << ",\n";
+            f << "  \"distance_average_mm\": " << frame.distance_average_mm << ",\n";
+            f << "  \"distance_min_mm\": " << frame.distance_min_mm << ",\n";
+            f << "  \"saturation_count\": " << frame.saturation_count << ",\n";
+            f << "  \"frame_counter\": " << frame.frame_counter << "\n";
+            f << "}\n";
+        }
+    }
+
     csv_.flush();
     return true;
 }

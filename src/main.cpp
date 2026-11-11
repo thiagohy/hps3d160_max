@@ -5,6 +5,8 @@
 #include "recorder.hpp"
 #include "health_monitor.hpp"
 #include "filter_config.hpp"
+#include "sdk_bridge.hpp"
+#include "capability_probe.hpp"
 
 #ifdef HPS3D160_MAX_WITH_ROS
 #include "ros_publisher.hpp"
@@ -17,6 +19,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <fstream>
 #include <string>
 #include <thread>
 
@@ -35,9 +38,12 @@ static void printUsage(const char* prog) {
     std::printf("  --format csv|pcd        Recording format (default: csv)\n");
     std::printf("  --single                Single capture mode instead of continuous\n");
     std::printf("  --max-frames N          Stop after N frames (0 = unlimited)\n");
+    std::printf("  --probe                 Dump the full hardware capability report (JSON) and exit\n");
+    std::printf("  --probe-out FILE        Write the capability report to FILE\n");
 }
 
-static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, std::string& record_dir, std::string& format, int& max_frames) {
+static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, std::string& record_dir,
+                      std::string& format, int& max_frames, bool& probe, std::string& probe_out) {
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--mode" && i + 1 < argc) {
@@ -63,6 +69,11 @@ static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, 
             cfg.capture.continuous = false;
         } else if (a == "--max-frames" && i + 1 < argc) {
             max_frames = std::stoi(argv[++i]);
+        } else if (a == "--probe") {
+            probe = true;
+        } else if (a == "--probe-out" && i + 1 < argc) {
+            probe_out = argv[++i];
+            probe = true;
         } else if (a == "--help" || a == "-h") {
             printUsage(argv[0]);
             return false;
@@ -89,8 +100,10 @@ int main(int argc, char** argv) {
     std::string record_dir;
     std::string format = "csv";
     int max_frames = 0;
+    bool probe = false;
+    std::string probe_out;
 
-    if (!parseArgs(argc, argv, cfg, single, record_dir, format, max_frames)) {
+    if (!parseArgs(argc, argv, cfg, single, record_dir, format, max_frames, probe, probe_out)) {
         return 0;
     }
 
@@ -108,6 +121,31 @@ int main(int argc, char** argv) {
     if (mgr.size() == 0) {
         std::fprintf(stderr, "[main] no devices connected, exiting\n");
         return 1;
+    }
+
+    if (probe) {
+        hps::SdkBridge bridge;
+        if (bridge.available() && bridge.bind(mgr.device(0).handle())) {
+            std::printf("[main] advanced SDK entry points bound to handle %d\n", mgr.device(0).handle());
+        } else {
+            std::fprintf(stderr, "[main] advanced SDK entry points unavailable, partial report\n");
+        }
+        hps::CapabilityProbe probe_tool(bridge);
+        hps::CapabilityReport report = probe_tool.collect();
+        const std::string json = report.to_json();
+        if (probe_out.empty()) {
+            std::printf("%s", json.c_str());
+        } else {
+            std::ofstream out(probe_out);
+            if (!out) {
+                std::fprintf(stderr, "[main] cannot write %s\n", probe_out.c_str());
+            } else {
+                out << json;
+                std::printf("[main] capability report written to %s\n", probe_out.c_str());
+            }
+        }
+        mgr.disconnectAll();
+        return 0;
     }
 
     // Recorder

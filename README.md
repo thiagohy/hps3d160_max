@@ -86,6 +86,23 @@ Release\hps3d160_max_node.exe --port COM3 --single --max-frames 5 --record-dir .
 
 Note: the Linux `.so`/`.a` in `third_party/hps_sdk/lib` are not used on Windows; use the `.dll`/`.lib` from the SDK instead.
 
+## Hardware capability report
+
+The SDK library exports a much richer API than the public wrapper. This project
+maps the public handle onto the internal one (`src/sdk_bridge.cpp`) and can dump
+**every** configuration the sensor exposes:
+
+```bash
+./build/hps3d160_max_node --port /dev/ttyACM0 --probe --probe-out report.json
+```
+
+The report contains identity, link parameters, HDR/integration, filters, ROI
+geometry and thresholds, GPIO configuration, interference detection, point cloud
+options, obstacle settings and the sensor temperature.
+A real capture from an HPS-3D160-U is kept in `docs/hardware_report.json`.
+
+See `docs/CAPABILITIES.md` for the full hardware capability map.
+
 ## Notes
 
 - The SDK core is proprietary; only headers and x86_64 Linux libraries are bundled.

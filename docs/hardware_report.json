@@ -1,0 +1,161 @@
+{
+  "identity": {
+    "device_version": "V1.7.89 19-12-19",
+    "sdk_version": "V1.8.6 23-10-30",
+    "serial_number": "SN:HU23M12233D1901279",
+    "sensor_temperature_c": 30.9
+  },
+  "link": {
+    "transport": "usb",
+    "device_address": 0,
+    "multi_camera_code": 0,
+    "keep_alive_enabled": false,
+    "keep_alive_time_ms": 5000
+  },
+  "optics": {
+    "hdr_mode": "super_hdr",
+    "hdr_overexposed_amplitude": 500,
+    "hdr_weak_amplitude": 120,
+    "hdr_simple_max_integration_us": 2000,
+    "hdr_simple_min_integration_us": 200,
+    "hdr_super_frame_number": 4,
+    "hdr_super_max_integration_us": 2000,
+    "hdr_disable_integration_us": 2000,
+    "max_integration_time_us": 2000,
+    "min_amplitude": 120,
+    "optical_compensation": false,
+    "view_angle_horiz_deg": 76,
+    "view_angle_vertical_deg": 32,
+    "illum_angle_horiz_deg": 82,
+    "illum_angle_vertical_deg": 36,
+    "mounting_enabled": false,
+    "mounting_angle_deg": 0,
+    "mounting_height_mm": 0
+  },
+  "filtering": {
+    "distance_filter_type": "disable",
+    "distance_filter_k": 0.3,
+    "distance_filter_threshold": 200,
+    "distance_filter_num_check": 2,
+    "smooth_filter_type": "disable",
+    "smooth_filter_arg": 2,
+    "distance_offset_mm": 0,
+    "edge_detection_enabled": false,
+    "edge_detection_value": 1000,
+    "threshold_offset": 0
+  },
+  "roi": {
+    "count": 8,
+    "threshold_count": 3,
+    "current_group_id": 0,
+    "rois": [
+      {
+        "id": 0,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 1,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 2,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 3,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 4,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 5,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 6,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      },
+      {
+        "id": 7,
+        "enabled": false,
+        "region": [0, 0, 0, 0],
+        "thresholds": [
+          {"id": 0, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 1, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"},
+          {"id": 2, "enabled": false, "value": 0, "hysteresis": 0, "positive": false, "pixel_number_threshold": 0, "reference": "distance_average", "alarm": "disable"}
+        ]
+      }
+    ]
+  },
+  "gpio": {
+    "count": 6,
+    "input_count": 3,
+    "output_count": 3,
+    "input": "pin=1 polarity=low function=disable; pin=2 polarity=low function=disable; pin=3 polarity=low function=disable",
+    "output": "pin=10 polarity=low function=disable; pin=11 polarity=low function=disable; pin=12 polarity=low function=disable"
+  },
+  "interference": {
+    "detection_enabled": false,
+    "integration_time_us": 25,
+    "amplitude_threshold": 6,
+    "capture_num": 1,
+    "number_check": 1
+  },
+  "point_cloud": {
+    "enabled": false,
+    "mirror": "disable"
+  },
+  "obstacle": {
+    "enabled": false,
+    "count": 0,
+    "min_distance_mm": 0,
+    "max_distance_mm": 0,
+    "invalid_value_mm": 0,
+    "pixel_number_threshold": 4
+  },
+  "notes": []
+}
