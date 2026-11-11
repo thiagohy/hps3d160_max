@@ -54,7 +54,7 @@ node() {
               source $WORKSPACE/devel/setup.bash
               roscore >/tmp/roscore.log 2>&1 &
               sleep 4
-              rosrun hps3d160_max hps3d160_max_node --port $PORT --max-frames 0"
+              rosrun hps3d160_max hps3d160_max_node --port $PORT --max-frames 0 ${HPS3D_ARGS:-}"
   echo "container $CONTAINER started (logs: docker logs -f $CONTAINER)"
 }
 

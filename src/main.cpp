@@ -8,6 +8,7 @@
 #include "sdk_bridge.hpp"
 #include "capability_probe.hpp"
 #include "hdr_compare.hpp"
+#include "throughput_bench.hpp"
 
 #ifdef HPS3D160_MAX_WITH_ROS
 #include "ros_publisher.hpp"
@@ -46,11 +47,15 @@ static void printUsage(const char* prog) {
     std::printf("  --probe-out FILE        Write the capability report to FILE\n");
     std::printf("  --hdr-compare [N]       Compare HDR modes (N frames per mode, default 30)\n");
     std::printf("  --hdr-out FILE          Write the HDR comparison report to FILE\n");
+    std::printf("  --bench [SECONDS]       Measure the achievable frame rate per HDR mode\n");
+    std::printf("  --bench-out FILE        Write the throughput report to FILE\n");
+    std::printf("  --hdr-mode MODE         Force HDR mode: disable|auto|super|simple\n");
 }
 
 static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, std::string& record_dir,
                       std::string& format, int& max_frames, bool& probe, std::string& probe_out,
-                      bool& hdr_compare, int& hdr_frames, std::string& hdr_out) {
+                      bool& hdr_compare, int& hdr_frames, std::string& hdr_out,
+                      bool& bench, int& bench_seconds, std::string& bench_out, std::string& hdr_mode) {
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--mode" && i + 1 < argc) {
@@ -78,6 +83,16 @@ static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, 
             max_frames = std::stoi(argv[++i]);
         } else if (a == "--probe") {
             probe = true;
+        } else if (a == "--hdr-mode" && i + 1 < argc) {
+            hdr_mode = argv[++i];
+        } else if (a == "--bench") {
+            bench = true;
+            if (i + 1 < argc && argv[i + 1][0] != '-') {
+                bench_seconds = std::stoi(argv[++i]);
+            }
+        } else if (a == "--bench-out" && i + 1 < argc) {
+            bench_out = argv[++i];
+            bench = true;
         } else if (a == "--hdr-compare") {
             hdr_compare = true;
             if (i + 1 < argc && argv[i + 1][0] != '-') {
@@ -120,9 +135,13 @@ int main(int argc, char** argv) {
     bool hdr_compare = false;
     int hdr_frames = 30;
     std::string hdr_out;
+    bool bench = false;
+    int bench_seconds = 5;
+    std::string bench_out;
+    std::string hdr_mode;
 
     if (!parseArgs(argc, argv, cfg, single, record_dir, format, max_frames, probe, probe_out,
-                   hdr_compare, hdr_frames, hdr_out)) {
+                   hdr_compare, hdr_frames, hdr_out, bench, bench_seconds, bench_out, hdr_mode)) {
         return 0;
     }
 
@@ -140,6 +159,27 @@ int main(int argc, char** argv) {
     if (mgr.size() == 0) {
         std::fprintf(stderr, "[main] no devices connected, exiting\n");
         return 1;
+    }
+
+    if (!hdr_mode.empty()) {
+        hps::SdkBridge bridge;
+        if (bridge.available() && bridge.bind(mgr.device(0).handle())) {
+            hps::internal::HDRModeTypeDef mode = hps::internal::HDR_DISABLE;
+            bool known = true;
+            if (hdr_mode == "disable") mode = hps::internal::HDR_DISABLE;
+            else if (hdr_mode == "auto") mode = hps::internal::AUTO_HDR;
+            else if (hdr_mode == "super") mode = hps::internal::SUPER_HDR;
+            else if (hdr_mode == "simple") mode = hps::internal::SIMPLE_HDR;
+            else known = false;
+            if (known) {
+                const bool ok = bridge.set_hdr_mode(mode);
+                std::printf("[main] HDR mode '%s' %s\n", hdr_mode.c_str(), ok ? "applied" : "FAILED");
+            } else {
+                std::fprintf(stderr, "[main] unknown HDR mode '%s'\n", hdr_mode.c_str());
+            }
+        } else {
+            std::fprintf(stderr, "[main] advanced SDK entry points unavailable, cannot set HDR mode\n");
+        }
     }
 
     if (probe) {
@@ -161,6 +201,37 @@ int main(int argc, char** argv) {
             } else {
                 out << json;
                 std::printf("[main] capability report written to %s\n", probe_out.c_str());
+            }
+        }
+        mgr.disconnectAll();
+        return 0;
+    }
+
+    if (bench) {
+        hps::SdkBridge bridge;
+        const bool ok = bridge.available() && bridge.bind(mgr.device(0).handle());
+        if (!ok) {
+            std::fprintf(stderr, "[main] advanced SDK entry points unavailable, cannot switch HDR modes\n");
+            mgr.disconnectAll();
+            return 1;
+        }
+        std::printf("\nThroughput benchmark (%d s per configuration)\n", bench_seconds);
+        std::printf("%-14s %8s %11s %10s %8s\n", "config", "fps", "interval", "MB/s", "event");
+        auto results = hps::ThroughputBenchmark::run(bridge, bench_seconds, true);
+        for (const auto& r : results) {
+            std::printf("%-14s %8.2f %9.2fms %9.2f %8d\n", r.label.c_str(), r.fps, r.interval_ms,
+                        r.payload_mb_s, r.event_type);
+        }
+        const std::string json = hps::ThroughputBenchmark::to_json(results);
+        if (bench_out.empty()) {
+            std::printf("%s", json.c_str());
+        } else {
+            std::ofstream out(bench_out);
+            if (!out) {
+                std::fprintf(stderr, "[main] cannot write %s\n", bench_out.c_str());
+            } else {
+                out << json;
+                std::printf("[main] throughput report written to %s\n", bench_out.c_str());
             }
         }
         mgr.disconnectAll();

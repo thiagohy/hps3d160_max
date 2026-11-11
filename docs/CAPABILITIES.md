@@ -25,7 +25,7 @@ Fontes analisadas:
 | FoV | 76° (H) × 32° (V) |
 | FoV de iluminação | 82° × 36° |
 | Alcance | 0,25 m – 12 m (alvo 90 % refletância) |
-| Frame rate | até 35 fps (FOV completo); maior com ROI |
+| Frame rate | até 35 fps (FOV completo) segundo o datasheet; **medido 42,5 fps** em `auto_hdr` |
 | Firmware | `V1.7.89 19-12-19` |
 | SDK | `V1.8.6 23-10-30` |
 | Temperatura do sensor | lida em runtime (≈30,8 °C) |

@@ -1,0 +1,10 @@
+{
+  "measurements": [
+    {"label": "disable", "fps": 32.9972, "interval_ms": 30.1899, "payload_mb_s": 4.43535, "event_type": 3},
+    {"label": "auto_hdr", "fps": 42.3961, "interval_ms": 23.6188, "payload_mb_s": 5.69872, "event_type": 3},
+    {"label": "super_hdr", "fps": 16.7984, "interval_ms": 59.3389, "payload_mb_s": 2.25797, "event_type": 3},
+    {"label": "simple_hdr", "fps": 19.4997, "interval_ms": 49.1118, "payload_mb_s": 2.62107, "event_type": 3},
+    {"label": "packet_depth", "fps": 20.5991, "interval_ms": 48.7779, "payload_mb_s": 2.76885, "event_type": 3},
+    {"label": "packet_roi", "fps": 20.1979, "interval_ms": 49.6008, "payload_mb_s": 0.0136412, "event_type": 4}
+  ]
+}

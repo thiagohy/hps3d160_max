@@ -116,6 +116,17 @@ A real capture from an HPS-3D160-U is kept in `docs/hardware_report.json`.
 
 See `docs/CAPABILITIES.md` for the full hardware capability map.
 
+## Frame rate
+
+```bash
+./build/hps3d160_max_node --port /dev/ttyACM0 --bench 10 --bench-out throughput.json
+```
+
+Measured on an HPS-3D160-U: **~42.5 fps** in `auto_hdr` (23.6 ms/frame),
+33 fps in `disable`, 19.5 fps in `simple_hdr` and 16.8 fps in `super_hdr`
+(4 synthesised frames). End-to-end in ROS the same 42.5 Hz is sustained, so the
+sensor — not the pipeline — is the limit. Full table in `docs/throughput.md`.
+
 ## HDR comparison (SNR)
 
 ```bash
