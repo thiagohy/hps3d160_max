@@ -41,8 +41,54 @@ roslaunch hps3d160_max hps3d160.launch
 | Point cloud | HPS3D_DepthData_t.point_cloud_data |
 | Export/save settings | HPS3D_ExportSettings / HPS3D_SaveSettings |
 
+## Using with WSL (usbipd)
+
+When the device is connected to Windows as `COM3`, expose it to WSL 2:
+
+```powershell
+# PowerShell (Administrator)
+usbipd list
+usbipd bind --busid 2-2
+usbipd attach --wsl --busid 2-2
+```
+
+Then in WSL:
+
+```bash
+ls /dev/ttyACM0
+sudo chmod 777 /dev/ttyACM0
+./build/hps3d160_max_node --port /dev/ttyACM0 --single --max-frames 5 --record-dir ./out
+```
+
+Detach when done:
+
+```powershell
+usbipd detach --busid 2-2
+```
+
+## Build on Windows (native)
+
+1. Open a Visual Studio 2017/2019/2022 Developer Command Prompt.
+2. Ensure `HPS3D160_SDK_X64.dll` and `.lib` are in the link path (`third_party/hps_sdk/lib` or system PATH).
+3. Configure with CMake (MSVC generator) and build:
+
+```bat
+mkdir build && cd build
+cmake .. -G "Visual Studio 16 2019" -A x64 -DHPS3D160_MAX_WITH_ROS=OFF
+cmake --build . --config Release
+```
+
+4. Run with the device on `COM3`:
+
+```bat
+Release\hps3d160_max_node.exe --port COM3 --single --max-frames 5 --record-dir .\out
+```
+
+Note: the Linux `.so`/`.a` in `third_party/hps_sdk/lib` are not used on Windows; use the `.dll`/`.lib` from the SDK instead.
+
 ## Notes
 
 - The SDK core is proprietary; only headers and x86_64 Linux libraries are bundled.
 - For ARM targets, replace `third_party/hps_sdk/lib` with the matching `.so`/`.a`.
 - Recording formats: CSV (always) + per-frame XYZ; PCD when built with PCL.
+- The device appears as `COM3` on Windows and `/dev/ttyACM0` in WSL after `usbipd attach`.
