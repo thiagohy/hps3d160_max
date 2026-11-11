@@ -127,6 +127,22 @@ A geometric detector (ground removal + clustering + body proportions) publishes
 Heart-rate measurement is **not** feasible with this sensor - the measurements
 that prove it are in `docs/human_sensing.md`.
 
+## Advanced techniques
+
+`docs/advanced_techniques.md` maps every advanced technique to the measured
+limits of the sensor. Key numbers (measured on real hardware):
+
+| | value |
+|---|---|
+| random noise / pixel | 17,4 mm (`disable`) … 28,2 mm (`super_hdr`) |
+| fixed pattern noise | ~87 mm (does **not** average out) |
+| detection floor, 256 px | 20,9 mm raw → **3,3 mm with FPN calibration** |
+| breath displacement | 5–20 mm → detectable with FPN calibration |
+| heart beat | 0,3–2 mm → **not detectable** (needs > 10.000 coherent pixels) |
+
+The FPN calibration is the highest leverage technique available: it is not in
+the sensor (the factory bad-pixel table is empty) and must be done in software.
+
 ## Frame rate
 
 ```bash

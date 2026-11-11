@@ -21,6 +21,7 @@
 #include <cstring>
 #include <string>
 #include <unistd.h>
+#include <mutex>
 #include <vector>
 
 namespace {
@@ -30,6 +31,7 @@ constexpr int kHeight = 60;
 constexpr int kPixels = kWidth * kHeight;
 constexpr int kRing = 4096;
 
+std::mutex g_mutex;    // the SDK thread writes while the analysis reads
 std::vector<float> g_ring;
 std::vector<int> g_count(kPixels, 0);
 std::vector<int> g_write(kPixels, 0);
@@ -37,6 +39,7 @@ long g_total = 0;
 
 void onFrame(int, int eventType, std::uint8_t* data, int, void*) {
     if (eventType != 3) return;
+    std::lock_guard<std::mutex> lk(g_mutex);
     for (int i = 0; i < kPixels; ++i) {
         const std::uint16_t d = static_cast<std::uint16_t>((data[16 + 2 * i] << 8) | data[17 + 2 * i]);
         const float v = (d > 0 && d < 60000) ? static_cast<float>(d) : NAN;
@@ -137,6 +140,10 @@ Spectrum analyse(const std::vector<double>& raw, double fs) {
 int main(int argc, char** argv) {
     const int seconds = argc > 1 ? std::atoi(argv[1]) : 60;
     const char* port = argc > 2 ? argv[2] : "/dev/ttyACM0";
+    // optional distance gate (metres) so that only the target region is analysed
+    const double dmin = argc > 3 ? std::atof(argv[3]) : 0.0;
+    const double dmax = argc > 4 ? std::atof(argv[4]) : 12.0;
+    std::printf("faixa de analise: %.2f - %.2f m\n", dmin, dmax);
 
     int handle = -1;
     if (HPS3D_USBConnectDevice(const_cast<char*>(port), &handle) != HPS3D_RET_OK) {
@@ -156,6 +163,7 @@ int main(int argc, char** argv) {
     HPS3D_StopCapture(handle);
     HPS3D_CloseDevice(handle);
 
+    std::lock_guard<std::mutex> lk(g_mutex);
     const double fps = g_total / static_cast<double>(seconds);
     const int n = std::min<int>(kRing, g_count[0]);
     std::printf("\nframes=%ld  fps=%.2f  amostras/pixel=%d (%.1f s)\n", g_total, fps, n, n / fps);
@@ -206,6 +214,8 @@ int main(int argc, char** argv) {
             const Spectrum sp2 = analyse(part, fps);
             if (std::fabs(sp2.peak_hz - sp.peak_hz) < 0.15) ++consistent;
         }
+
+        if (med < dmin * 1000.0 || med > dmax * 1000.0) continue;   // distance gate
 
         Hit h;
         h.z = sp.z;
@@ -287,6 +297,44 @@ int main(int argc, char** argv) {
         std::printf("\n=== teste de sanidade: banda de respiracao (0.1-0.5 Hz) ===\n");
         std::printf("melhor z-score: %.1f em %.2f Hz (%.1f rpm)\n", best_resp_z, best_resp_hz,
                     best_resp_hz * 60.0);
+    }
+
+    if (best) {
+        // detailed spectrum of the best pixel
+        const int p = best->pixel;
+        std::vector<double> series;
+        series.reserve(n);
+        const int start = (g_write[p] - n + kRing) % kRing;
+        for (int k = 0; k < n; ++k)
+            series.push_back(g_ring[static_cast<std::size_t>(p) * kRing + (start + k) % kRing]);
+        std::vector<double> x = series;
+        std::sort(x.begin(), x.end());
+        const double med = x[x.size() / 2];
+        std::vector<double> dev;
+        for (double v : x) dev.push_back(std::fabs(v - med));
+        std::sort(dev.begin(), dev.end());
+        const double mad = dev[dev.size() / 2] * 1.4826;
+        double mean = 0; std::size_t used = 0;
+        for (double v : series) { if (std::fabs(v - med) > 5 * mad) continue; mean += v; ++used; }
+        mean /= used;
+        for (double& v : x) { if (std::fabs(v - med) > 5 * mad) v = med; v -= mean; }
+        std::vector<double> win(x.size());
+        for (std::size_t i = 0; i < x.size(); ++i)
+            win[i] = x[i] * (0.5 - 0.5 * std::cos(2.0 * M_PI * static_cast<double>(i) /
+                                                    static_cast<double>(x.size() - 1)));
+        const double df = fps / x.size();
+        std::printf("\n=== espectro do pixel (%d,%d) a %.0f mm ===\n", best->x, best->y, med);
+        std::printf("ruido temporal (MAD) : %.2f mm\n", mad);
+        std::printf("freq    amplitude(mm)   fracao do ruido\n");
+        double resp_peak = 0, resp_f = 0;
+        for (double f = 0.1; f <= 3.0; f += df) {
+            const double amp = goertzel(win, f, fps) * 4.0;
+            if (f <= 0.5) { if (amp > resp_peak) { resp_peak = amp; resp_f = f; } }
+            if (f > 0.6 && f <= 2.5)
+                std::printf("%5.2f Hz  %8.3f        %6.3f\n", f, amp, mad > 0 ? amp / mad : 0.0);
+        }
+        std::printf("respiracao: %.2f Hz (%.1f rpm), amplitude %.3f mm (%.3f x ruido)\n", resp_f,
+                    resp_f * 60.0, resp_peak, mad > 0 ? resp_peak / mad : 0.0);
     }
 
     std::printf("\n=== VEREDITO ===\n");

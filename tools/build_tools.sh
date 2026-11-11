@@ -3,13 +3,14 @@
 #   tools/noise_probe.cpp      temporal noise floor of the distance measurement
 #   tools/noise_vs_distance.cpp noise floor as a function of the target distance
 #   tools/vital_signs.cpp        search for a cardiac component in the depth stream
+#   tools/fpn_probe.cpp          split the noise into random and fixed pattern parts
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SDK=third_party/hps_sdk
 mkdir -p build/tools
-for t in noise_probe noise_vs_distance vital_signs; do
-    g++ -std=c++17 -O2 "tools/$t.cpp" -o "build/tools/$t" \
-        -I"$SDK/include" -L"$SDK/lib" -lHPS3DSDK64_1-8-6 \
+for t in noise_probe noise_vs_distance vital_signs fpn_probe; do
+    g++ -std=c++17 -O2 "tools/$t.cpp" src/sdk_bridge.cpp -o "build/tools/$t" \
+        -I"$SDK/include" -Iinclude -Iinclude/hps3d160_max -L"$SDK/lib" -lHPS3DSDK64_1-8-6 \
         -Wl,-rpath,"$PWD/$SDK/lib"
     echo "built build/tools/$t"
 done
