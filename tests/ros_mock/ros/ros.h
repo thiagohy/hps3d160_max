@@ -1,6 +1,7 @@
 // Minimal mock of the ROS API surface used by ros_publisher.cpp, so the file
 // can be syntax/type checked on hosts without a ROS installation.
 #pragma once
+#include <cstdarg>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -14,6 +15,8 @@ struct Time {
 namespace sensor_msgs {
 
 struct PointField {
+    enum { INT8 = 1, UINT8 = 2, INT16 = 3, UINT16 = 4, INT32 = 5, UINT32 = 6,
+           FLOAT32 = 7, FLOAT64 = 8 };
     std::string name;
     uint32_t offset = 0;
     uint8_t datatype = 0;
@@ -37,6 +40,45 @@ struct PointCloud2 {
 
 struct PointCloud2Modifier {
     explicit PointCloud2Modifier(PointCloud2& c) : cloud_(c) {}
+
+    // Mirrors sensor_msgs::PointCloud2Modifier::setPointCloud2Fields(n, ...)
+    // which takes (name, count, datatype) triplets.
+    // Mirrors sensor_msgs::PointCloud2Modifier::resize(): resets width/height
+    // to (size, 1) and reallocates the data buffer.
+    void resize(size_t size) {
+        cloud_.width = static_cast<uint32_t>(size);
+        cloud_.height = 1;
+        cloud_.row_step = cloud_.point_step * cloud_.width;
+        cloud_.data.assign(static_cast<size_t>(cloud_.point_step) * size, 0);
+    }
+
+    void setPointCloud2Fields(int n_fields, ...) {
+        std::vector<std::string> names;
+        std::vector<int> counts;
+        std::vector<uint8_t> datatypes;
+        va_list vl;
+        va_start(vl, n_fields);
+        for (int i = 0; i < n_fields; ++i) {
+            names.push_back(va_arg(vl, const char*));
+            counts.push_back(va_arg(vl, int));
+            datatypes.push_back(static_cast<uint8_t>(va_arg(vl, int)));
+        }
+        va_end(vl);
+        cloud_.fields.clear();
+        uint32_t offset = 0;
+        for (int i = 0; i < n_fields; ++i) {
+            PointField f;
+            f.name = names[i];
+            f.offset = offset;
+            f.datatype = datatypes[i];
+            f.count = static_cast<uint32_t>(counts[i]);
+            offset += 4 * f.count;
+            cloud_.fields.push_back(f);
+        }
+        cloud_.point_step = offset;
+        cloud_.row_step = offset * cloud_.width;
+        cloud_.data.assign(static_cast<size_t>(cloud_.point_step) * cloud_.width * cloud_.height, 0);
+    }
     template <typename... Rest>
     void setPointCloud2FieldsByString(int, const std::string& names, Rest... rest) {
         std::string all = names + " " + join(rest...);

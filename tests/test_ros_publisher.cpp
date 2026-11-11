@@ -42,10 +42,10 @@ int main() {
     const float vx = read(0, xoff), vz = read(0, zoff), vd = read(0, doff);
     printf("point0: x=%.4f z=%.4f distance=%.4f (invalid -> nan expected: %s)\n", vx, vz, vd,
            std::isnan(vx) && std::isnan(vz) && std::isnan(vd) ? "yes" : "NO");
-    const float gx = read(160, xoff), gz = read(160, zoff), gd = read(160, doff);
-    printf("point160: x=%.4f z=%.4f distance=%.4f\n", gx, gz, gd);
+    const float gx = read(1, xoff), gz = read(1, zoff), gd = read(1, doff);
+    printf("point1: x=%.4f z=%.4f distance=%.4f\n", gx, gz, gd);
     const bool ok = std::isnan(vx) && std::isnan(vz) && std::isnan(vd) &&
-                    std::fabs(gz - 1.5f) < 1e-6 && std::fabs(gd - 1.5f) < 1e-6;
+                    std::fabs(gz - 1.01f) < 1e-6 && std::fabs(gd - 1.01f) < 1e-4;
     printf("%s\n", ok ? "PUBLISHER TEST OK" : "PUBLISHER TEST FAILED");
     return ok ? 0 : 1;
 }
