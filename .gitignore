@@ -9,3 +9,4 @@ hps_recordings/
 *.pcd
 *.xyz
 *.csv
+!samples/**
