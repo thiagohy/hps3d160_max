@@ -1,4 +1,7 @@
 build/
+__pycache__/
+*.pyc
+
 build_*/
 *.o
 *.a
