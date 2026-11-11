@@ -112,8 +112,27 @@ See `docs/CAPABILITIES.md` for the full hardware capability map.
 Switches the sensor between `disable` / `auto_hdr` / `super_hdr` / `simple_hdr`
 and reports coverage, weak-signal and saturation ratios, spatial noise
 (std-dev over 8x8 patches), temporal jitter and an SNR proxy per mode.
-A real measurement is stored in `docs/hdr_comparison.json`.
+A real measurement is stored in `docs/hdr_comparison.json`, and the analysis
+with the per-direction recommendation in `docs/hdr_guide.md`.
 
+
+## ROS publisher
+
+The node publishes `sensor_msgs/PointCloud2` on `/hps3d160/point_cloud`:
+
+- **organized cloud** (160 × 60) by default, so it can be aligned with a depth
+  image and with the sensor ROI coordinates; invalid pixels are `NaN`
+- extra `distance` field (float, metres) alongside `x/y/z` (metres)
+- the unit scale was validated against the per-pixel distance
+  (median radial error 32 mm, see `docs/scene_analysis.md`)
+- parameters: `point_cloud_topic`, `base_frame_id`, `organized_cloud`
+
+The ROS code path is covered by a test that runs against a minimal ROS mock, so
+it can be validated without a ROS installation:
+
+```bash
+./scripts/test_ros_publisher.sh
+```
 
 ## Notes
 

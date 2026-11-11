@@ -183,7 +183,7 @@ Alterna o sensor entre `disable`, `auto_hdr`, `super_hdr` e `simple_hdr`
 | `coverage` | fração de pixels com distância utilizável |
 | `low_amplitude_ratio` | fração de pixels com sinal fraco (`LOW_AMPLITUDE`) |
 | `saturated_ratio` | fração saturada / ADC overflow |
-| `spatial_noise_mm` | mediana do desvio-padrão da distância em patches 8×8 (ruído) |
+| `spatial_noise_mm` | mediana do **resíduo do ajuste de plano local** em patches 8×8 (ruído real, separado da estrutura da cena) |
 | `temporal_jitter_mm` | desvio-padrão da distância média entre frames |
 | `snr_proxy` | distância média ÷ ruído espacial |
 | `fps` | taxa efetiva por modo (super-HDR sintetiza 4 frames) |
@@ -192,7 +192,8 @@ Alterna o sensor entre `disable`, `auto_hdr`, `super_hdr` e `simple_hdr`
 (16 B de estatísticas + 9.600 distâncias + point cloud de 12 B/ponto = 134.416 B),
 por isso o SNR é estimado pelo comportamento espacial/temporal do depth map.
 
-Exemplo real medido em `docs/hdr_comparison.json`.
+Exemplo real medido em `docs/hdr_comparison.json`; análise e recomendação por
+setor angular em `docs/hdr_guide.md`.
 
 
 ## 7. Limitações conhecidas

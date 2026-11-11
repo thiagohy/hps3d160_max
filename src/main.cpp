@@ -252,7 +252,13 @@ int main(int argc, char** argv) {
 #ifdef HPS3D160_MAX_WITH_ROS
     ros::NodeHandle nh;
     hps::RosPointCloudPublisher ros_pub;
-    ros_pub.init(nh, "/hps3d160/point_cloud", "hps3d160");
+    bool organized = true;
+    std::string topic = "/hps3d160/point_cloud";
+    std::string frame_id = "hps3d160";
+    nh.param("point_cloud_topic", topic, topic);
+    nh.param("base_frame_id", frame_id, frame_id);
+    nh.param("organized_cloud", organized, organized);
+    ros_pub.init(nh, topic, frame_id, organized);
 #endif
 
     std::atomic<std::uint64_t> total_frames{0};

@@ -22,6 +22,15 @@ namespace hps {
 //                     (mm). A flat wall gives a direct estimate of the noise.
 //   * temporal jitter-> std-dev of the mean distance between consecutive frames
 //   * snr proxy     -> mean distance / spatial noise (dB like ratio)
+// Metrics for one horizontal sector of the field of view (76 deg / 12 sectors).
+struct SectorMetrics {
+    double angle_center_deg = 0.0;
+    double coverage = 0.0;
+    double spatial_noise_mm = 0.0;
+    int valid_pixels = 0;
+    int total_pixels = 0;
+};
+
 struct HdrMetrics {
     std::string mode;
     int frames = 0;
@@ -37,6 +46,7 @@ struct HdrMetrics {
     double spatial_noise_mm = 0.0;
     double temporal_jitter_mm = 0.0;
     double snr_proxy = 0.0;
+    std::vector<SectorMetrics> sectors;
 
     std::string to_json() const;
 };
@@ -61,6 +71,11 @@ private:
     double patch_noise_sum_ = 0.0;
     int patch_count_ = 0;
     std::vector<double> frame_means_;
+    // per horizontal sector (12 sectors over the 76 deg FoV)
+    std::vector<int> sector_valid_;
+    std::vector<int> sector_total_;
+    std::vector<double> sector_noise_sum_;
+    std::vector<int> sector_patches_;
     double elapsed_seconds_ = 0.0;
     std::chrono::steady_clock::time_point first_frame_{};
     std::chrono::steady_clock::time_point last_frame_{};
