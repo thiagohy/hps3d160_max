@@ -2,6 +2,8 @@ build/
 *.o
 *.a
 *.so
+!third_party/hps_sdk/lib/*.a
+!third_party/hps_sdk/lib/*.so
 hps_recordings/
 *.pcd
 *.xyz
