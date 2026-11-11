@@ -9,10 +9,12 @@
 #include "capability_probe.hpp"
 #include "hdr_compare.hpp"
 #include "throughput_bench.hpp"
+#include "presence_detector.hpp"
 
 #ifdef HPS3D160_MAX_WITH_ROS
 #include "ros_publisher.hpp"
 #include <ros/ros.h>
+#include <std_msgs/Bool.h>
 #endif
 
 #include <atomic>
@@ -50,12 +52,14 @@ static void printUsage(const char* prog) {
     std::printf("  --bench [SECONDS]       Measure the achievable frame rate per HDR mode\n");
     std::printf("  --bench-out FILE        Write the throughput report to FILE\n");
     std::printf("  --hdr-mode MODE         Force HDR mode: disable|auto|super|simple\n");
+    std::printf("  --presence              Run the person/presence detection and report\n");
 }
 
 static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, std::string& record_dir,
                       std::string& format, int& max_frames, bool& probe, std::string& probe_out,
                       bool& hdr_compare, int& hdr_frames, std::string& hdr_out,
-                      bool& bench, int& bench_seconds, std::string& bench_out, std::string& hdr_mode) {
+                      bool& bench, int& bench_seconds, std::string& bench_out, std::string& hdr_mode,
+                      bool& presence) {
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--mode" && i + 1 < argc) {
@@ -83,6 +87,8 @@ static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, 
             max_frames = std::stoi(argv[++i]);
         } else if (a == "--probe") {
             probe = true;
+        } else if (a == "--presence") {
+            presence = true;
         } else if (a == "--hdr-mode" && i + 1 < argc) {
             hdr_mode = argv[++i];
         } else if (a == "--bench") {
@@ -139,9 +145,11 @@ int main(int argc, char** argv) {
     int bench_seconds = 5;
     std::string bench_out;
     std::string hdr_mode;
+    bool presence = false;
 
     if (!parseArgs(argc, argv, cfg, single, record_dir, format, max_frames, probe, probe_out,
-                   hdr_compare, hdr_frames, hdr_out, bench, bench_seconds, bench_out, hdr_mode)) {
+                   hdr_compare, hdr_frames, hdr_out, bench, bench_seconds, bench_out, hdr_mode,
+                   presence)) {
         return 0;
     }
 
@@ -309,6 +317,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    // Presence detector (person sized objects in the depth map)
+    hps::PresenceDetector presence_detector;
+
     // Recorder
     hps::Recorder recorder(cfg.recording);
     if (cfg.recording.enabled) {
@@ -330,6 +341,7 @@ int main(int argc, char** argv) {
     nh.param("base_frame_id", frame_id, frame_id);
     nh.param("organized_cloud", organized, organized);
     ros_pub.init(nh, topic, frame_id, organized);
+    ros::Publisher presence_pub = nh.advertise<std_msgs::Bool>("/hps3d160/presence", 1);
 #endif
 
     std::atomic<std::uint64_t> total_frames{0};
@@ -341,7 +353,22 @@ int main(int argc, char** argv) {
         }
 #ifdef HPS3D160_MAX_WITH_ROS
         ros_pub.publish(frame);
+        if (presence_pub.getNumSubscribers() > 0) {
+            const hps::PresenceResult pr = presence_detector.analyze(frame);
+            std_msgs::Bool msg;
+            msg.data = pr.present;
+            presence_pub.publish(msg);
+        }
 #endif
+        if (presence) {
+            const hps::PresenceResult pr = presence_detector.analyze(frame);
+            std::printf("[presence] frame %llu: %s\n", (unsigned long long)frame.frame_id,
+                        pr.summary.c_str());
+            for (const auto& b : pr.blobs) {
+                std::printf("    blob %5d pts  h=%.2f m  w=%.2f m  z=%.2f m  %s\n", b.points, b.height,
+                            b.width, b.z_mean, b.person_like ? "<person-like>" : "");
+            }
+        }
         health.onFrame(frame, stats);
         if (cfg.recording.max_frames > 0 && stats.frames_total >= cfg.recording.max_frames) {
             g_stop = 1;

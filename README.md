@@ -116,6 +116,17 @@ A real capture from an HPS-3D160-U is kept in `docs/hardware_report.json`.
 
 See `docs/CAPABILITIES.md` for the full hardware capability map.
 
+## People detection
+
+```bash
+./build/hps3d160_max_node --port /dev/ttyACM0 --presence --max-frames 10
+```
+
+A geometric detector (ground removal + clustering + body proportions) publishes
+`std_msgs/Bool` on `/hps3d160/presence` and reports the blobs it finds.
+Heart-rate measurement is **not** feasible with this sensor - the measurements
+that prove it are in `docs/human_sensing.md`.
+
 ## Frame rate
 
 ```bash
