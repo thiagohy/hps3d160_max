@@ -1,2 +1,2 @@
 frame_id,timestamp_ms,width,height,point_count,distance_avg_mm,distance_min_mm,saturation_count,frame_counter,valid_points
-1,4949750,160,60,9600,521,209,0,2213,4167
+1,6811033,160,60,9600,3477,2023,0,19739,9126

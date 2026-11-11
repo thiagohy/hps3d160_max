@@ -13,22 +13,57 @@ python3 scripts/objects.py      samples/frame_1.distances.csv samples/frame_1.xy
 
 ---
 
-## 0. Correção de escala (bug encontrado nesta análise)
+## 0. Correções de geometria (bugs encontrados nesta análise)
 
-O parser do SDK (`HPS3DUser_IF.c`) entrega o point cloud como `raw/100`, e esse
+### 0.1 Escala
+
+O parser do SDK (`HPS3DUser_IF.c`) entrega o point cloud como `raw/100` e esse
 valor **já está em milímetros** (coincide exatamente com a distância por pixel).
-A conversão correta para metros é `point_data / 1000`.
+O demo oficial do fabricante divide por 1000 sobre esse valor já dividido por
+100 → resultado 100× menor que o real. O mesmo erro existia no
+`PointCloudBuilder` e foi corrigido.
 
-O demo oficial do fabricante (ROS) divide por 1000 sobre esse valor já dividido
-por 100 → resultado 100× menor que o real. O mesmo erro existia no
-`PointCloudBuilder` deste projeto e foi corrigido.
-
-Validação após a correção:
-
-| | erro mediano | p95 |
+| | erro mediano \|radial − distância\| | p95 |
 |---|---|---|
 | antes (÷100) | 4.083 mm | 9.382 mm |
-| **depois (÷1000)** | **32 mm** | **196 mm** |
+| depois de corrigir a escala (÷1000) | 32 mm | 196 mm |
+
+A correção de escala sozinha não bastava: o point cloud do firmware tem uma
+geometria errada (ver 0.2), que foi corrigida em seguida.
+
+### 0.2 O point cloud do firmware não é métrico (achado principal)
+
+Ao validar o cloud publicado no ROS contra a distância por pixel, o erro radial
+chegava a **292 mm a ~4 m**. Investigando o payload bruto (134.416 B =
+16 B de estatísticas + 9.600 distâncias + point cloud de 12 B/ponto):
+
+```
+z_firmware[i] / 100  ==  dist[i]        (erro 0,0 mm — alinhamento perfeito)
+x_firmware[i] / 100  ==  dist[i] * (80 - col) / 104
+y_firmware[i] / 100  ==  dist[i] * (30 - row) / 104
+```
+
+Ou seja, o firmware grava o **point cloud ortográfico** (aplicando `tan` onde
+deveria aplicar `sin`/`cos`), de modo que o ponto resultante **não está à
+distância medida** do sensor: o erro chega a ~15 % no centro e ~27 % na borda
+do FoV. Além disso, o payload usa a coluna 0 do lado **direito** do campo de
+visão.
+
+Correção aplicada em `PointCloudBuilder`: o cloud é reconstruído a partir da
+matriz de distâncias com o modelo esférico do fabricante
+(`tan(theta_h) = (80 - col) / 104`, `tan(theta_v) = (30 - row) / 104`):
+
+```
+X = d sin(theta_h) cos(theta_v)      Y = d sin(theta_v)      Z = d cos(theta_h) cos(theta_v)
+```
+
+Resultado (validado no ROS, ver `docs/ros_docker.md`):
+
+| | antes | depois |
+|---|---|---|
+| erro radial mediano | 292 mm | **0,000 mm** |
+| erro radial p95 | 658 mm | **0,000 mm** |
+| ângulo coluna 0 / 80 / 159 | +37,57° / −1,65° / +36,87° (inconsistente) | **+37,57° / 0,00° / −37,22°** |
 
 O resíduo restante (~8 % da distância) é a resolução angular do point cloud
 gerado pelo firmware.
@@ -117,7 +152,15 @@ enxerga:
 Nenhuma pessoa, animal ou veículo é detectável: o alcance efetivo da cena é
 apenas ~1 m, e a maior parte do campo central é superfície sem retorno.
 
-## 5. Recomendações de uso
+## 5. Point cloud em ROS
+
+O nó publica `/hps3d160/point_cloud` como cloud **organizado 160 × 60** (pixels
+inválidos como `NaN`), com os campos `x`, `y`, `z` e `distance` (metros),
+pronto para uso em RViz, PCL e `depthimage_to_laserscan`.
+
+![RViz](images/rviz_pointcloud.png)
+
+## 6. Recomendações de uso
 
 | Objetivo | Ajuste |
 |---|---|

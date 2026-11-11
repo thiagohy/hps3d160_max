@@ -14,6 +14,22 @@
 #include <limits>
 
 namespace hps {
+namespace {
+
+// Builds the field layout used by the publisher: x, y, z and distance (metres).
+// The helper setPointCloud2FieldsByString only understands the special names
+// "xyz", "rgb" and "rgba", so the fields are declared explicitly through the
+// (name, count, datatype) triplets expected by setPointCloud2Fields.
+void build_fields(sensor_msgs::PointCloud2Modifier& mod) {
+    mod.setPointCloud2Fields(
+        4,
+        "x", 1, sensor_msgs::PointField::FLOAT32,
+        "y", 1, sensor_msgs::PointField::FLOAT32,
+        "z", 1, sensor_msgs::PointField::FLOAT32,
+        "distance", 1, sensor_msgs::PointField::FLOAT32);
+}
+
+} // namespace
 
 void RosPointCloudPublisher::init(ros::NodeHandle& nh, const std::string& topic, const std::string& frame_id,
                                   bool organized) {
@@ -41,7 +57,13 @@ void RosPointCloudPublisher::publish(const PointCloudFrame& frame) {
         msg.width = frame.width;
 
         sensor_msgs::PointCloud2Modifier mod(msg);
-        mod.setPointCloud2FieldsByString(2, "xyz", "distance");
+        build_fields(mod);
+        // resize() resets width/height to (size, 1), so the organised geometry
+        // is restored afterwards.
+        mod.resize(frame.points.size());
+        msg.width = frame.width;
+        msg.height = frame.height;
+        msg.row_step = msg.point_step * msg.width;
 
         sensor_msgs::PointCloud2Iterator<float> ix(msg, "x");
         sensor_msgs::PointCloud2Iterator<float> iy(msg, "y");
@@ -72,7 +94,8 @@ void RosPointCloudPublisher::publish(const PointCloudFrame& frame) {
         msg.width = static_cast<std::uint32_t>(valid);
 
         sensor_msgs::PointCloud2Modifier mod(msg);
-        mod.setPointCloud2FieldsByString(2, "xyz", "distance");
+        build_fields(mod);
+        mod.resize(valid);
 
         sensor_msgs::PointCloud2Iterator<float> ix(msg, "x");
         sensor_msgs::PointCloud2Iterator<float> iy(msg, "y");

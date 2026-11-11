@@ -24,6 +24,19 @@ source devel/setup.bash
 roslaunch hps3d160_max hps3d160.launch
 ```
 
+### ROS on WSL (Docker)
+
+Ubuntu 24.04 has no ROS 1 Noetic binaries, so a container is used:
+
+```bash
+./scripts/ros_docker.sh build   # image + catkin build
+./scripts/ros_docker.sh node    # roscore + camera node
+./scripts/ros_docker.sh rviz    # RViz with the prepared config
+./scripts/ros_docker.sh stop
+```
+
+Details and validation results: `docs/ros_docker.md`.
+
 ## Features mapped to SDK
 
 | Feature | SDK API |
@@ -123,8 +136,11 @@ The node publishes `sensor_msgs/PointCloud2` on `/hps3d160/point_cloud`:
 - **organized cloud** (160 × 60) by default, so it can be aligned with a depth
   image and with the sensor ROI coordinates; invalid pixels are `NaN`
 - extra `distance` field (float, metres) alongside `x/y/z` (metres)
-- the unit scale was validated against the per-pixel distance
-  (median radial error 32 mm, see `docs/scene_analysis.md`)
+- the cloud is **metric**: it is rebuilt from the distance matrix with the
+  sensor optics, so `|(x,y,z)| == distance` exactly (radial error 0,000 mm).
+  The point cloud shipped by the firmware is *not* metric (it uses a tangent
+  approximation and the axial depth as `z`, up to 27 % error at the FoV border)
+  — see `docs/scene_analysis.md`
 - parameters: `point_cloud_topic`, `base_frame_id`, `organized_cloud`
 
 The ROS code path is covered by a test that runs against a minimal ROS mock, so
@@ -133,6 +149,12 @@ it can be validated without a ROS installation:
 ```bash
 ./scripts/test_ros_publisher.sh
 ```
+
+## Validation
+
+![RViz](docs/images/rviz_pointcloud.png)
+
+Real capture rendered by RViz from the organised point cloud.
 
 ## Notes
 
