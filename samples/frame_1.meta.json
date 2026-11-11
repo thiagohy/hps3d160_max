@@ -1,12 +1,12 @@
 {
   "frame_id": 1,
-  "timestamp_ms": 4021226,
+  "timestamp_ms": 4949750,
   "width": 160,
   "height": 60,
   "point_count": 9600,
-  "valid_points": 4291,
-  "distance_average_mm": 516,
-  "distance_min_mm": 200,
+  "valid_points": 4167,
+  "distance_average_mm": 521,
+  "distance_min_mm": 209,
   "saturation_count": 0,
-  "frame_counter": 2102
+  "frame_counter": 2213
 }

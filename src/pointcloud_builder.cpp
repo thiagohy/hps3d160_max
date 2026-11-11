@@ -20,11 +20,13 @@ PointCloudFrame PointCloudBuilder::build(const HPS3D_DepthData_t& depth, std::ui
     for (std::size_t i = 0; i < n; ++i) {
         Point3D p{};
         p.distance_mm = (i < HPS3D_MAX_PIXEL_NUMBER) ? depth.distance[i] : 0;
-        // HPS3D point cloud is in cm (x/100). Convert to meters.
+        // The SDK point cloud is expressed in millimetres (the parser returns
+        // raw/100 which already equals the measured distance in mm). Convert to
+        // metres. Validated against the per-pixel distance: |(x,y,z)| == d.
         if (depth.point_cloud_data.point_data) {
-            p.x = depth.point_cloud_data.point_data[i].x / 100.0f;
-            p.y = depth.point_cloud_data.point_data[i].y / 100.0f;
-            p.z = depth.point_cloud_data.point_data[i].z / 100.0f;
+            p.x = depth.point_cloud_data.point_data[i].x / 1000.0f;
+            p.y = depth.point_cloud_data.point_data[i].y / 1000.0f;
+            p.z = depth.point_cloud_data.point_data[i].z / 1000.0f;
         }
         // Classify the pixel using the SDK sentinel values.
         if (p.distance_mm == 0) {
