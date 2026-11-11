@@ -1,0 +1,40 @@
+# HPS-3D160-U-IO max-utilization configuration
+connection:
+  mode: usb            # usb | eth
+  usb_port: /dev/ttyACM0
+  eth_ip: 192.168.0.10
+  eth_port: 12345
+  reconnect_enabled: true
+  keepalive_ms: 3000
+
+camera:
+  user_id: 0
+  roi_group_id: 0
+  multi_camera_code: 0
+  save_settings_to_device: false
+
+filters:
+  distance_filter_enabled: false
+  distance_filter_k: 0.3
+  smooth_filter_type: 0     # 0 disable, 1 average, 2 gauss
+  smooth_filter_args: 2
+  distance_offset: 0
+  optical_path_calibration: false
+  edge_filter_enabled: false
+
+capture:
+  continuous: true
+  target_fps: 30
+
+recording:
+  enabled: false
+  output_dir: ./hps_recordings
+  format: csv            # csv | pcd
+  max_frames: 0          # 0 = unlimited
+
+health:
+  enabled: true
+  log_interval_ms: 1000
+  min_fps_warning: 10
+
+device_count: 1

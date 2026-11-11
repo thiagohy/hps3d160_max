@@ -1,0 +1,26 @@
+<launch>
+  <!-- HPS-3D160-U-IO max-utilization node -->
+  <arg name="mode" default="usb"/>
+  <arg name="port" default="/dev/ttyACM0"/>
+  <arg name="ip" default="192.168.0.10"/>
+  <arg name="eth_port" default="12345"/>
+  <arg name="cameras" default="1"/>
+  <arg name="roi_group" default="0"/>
+  <arg name="record_dir" default=""/>
+  <arg name="format" default="csv"/>
+  <arg name="max_frames" default="0"/>
+  <arg name="single" default="false"/>
+
+  <node pkg="hps3d160_max" type="hps3d160_max_node" name="hps3d160_max_node" output="screen">
+    <param name="mode" value="$(arg mode)"/>
+    <param name="port" value="$(arg port)"/>
+    <param name="ip" value="$(arg ip)"/>
+    <param name="eth_port" value="$(arg eth_port)"/>
+    <param name="cameras" value="$(arg cameras)"/>
+    <param name="roi_group" value="$(arg roi_group)"/>
+    <param name="record_dir" value="$(arg record_dir)"/>
+    <param name="format" value="$(arg format)"/>
+    <param name="max_frames" value="$(arg max_frames)"/>
+    <param name="single" value="$(arg single)"/>
+  </node>
+</launch>

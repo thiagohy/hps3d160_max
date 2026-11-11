@@ -1,0 +1,8 @@
+build/
+*.o
+*.a
+*.so
+hps_recordings/
+*.pcd
+*.xyz
+*.csv
