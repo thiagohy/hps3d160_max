@@ -169,6 +169,32 @@ associa o handle público ao handle interno, liberando:
 Gera um JSON com identidade, link, óptica/HDR, filtros, ROIs (região + limiares),
 GPIO, anti-interferência, point cloud, obstáculos e temperatura.
 
+### Comparação de modos HDR (SNR)
+
+```bash
+./build/hps3d160_max_node --port /dev/ttyACM0 --hdr-compare 30 --hdr-out hdr.json
+```
+
+Alterna o sensor entre `disable`, `auto_hdr`, `super_hdr` e `simple_hdr`
+(via `HE201_ApiSetHDRMode`) e mede, por modo:
+
+| Métrica | Significado |
+| --- | --- |
+| `coverage` | fração de pixels com distância utilizável |
+| `low_amplitude_ratio` | fração de pixels com sinal fraco (`LOW_AMPLITUDE`) |
+| `saturated_ratio` | fração saturada / ADC overflow |
+| `spatial_noise_mm` | mediana do desvio-padrão da distância em patches 8×8 (ruído) |
+| `temporal_jitter_mm` | desvio-padrão da distância média entre frames |
+| `snr_proxy` | distância média ÷ ruído espacial |
+| `fps` | taxa efetiva por modo (super-HDR sintetiza 4 frames) |
+
+**Nota:** o firmware atual (`V1.7.89`) **não envia amplitude por pixel** no payload
+(16 B de estatísticas + 9.600 distâncias + point cloud de 12 B/ponto = 134.416 B),
+por isso o SNR é estimado pelo comportamento espacial/temporal do depth map.
+
+Exemplo real medido em `docs/hdr_comparison.json`.
+
+
 ## 7. Limitações conhecidas
 
 - A API interna não é documentada oficialmente neste repositório: as assinaturas

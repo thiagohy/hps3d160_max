@@ -76,6 +76,7 @@ file(GLOB HPS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/multi_camera_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sdk_bridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/capability_probe.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hdr_compare.cpp
 )
 add_library(hps3d160_core STATIC ${HPS_CORE_SOURCES})
 target_include_directories(hps3d160_core PUBLIC

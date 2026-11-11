@@ -26,13 +26,25 @@ PointCloudFrame PointCloudBuilder::build(const HPS3D_DepthData_t& depth, std::ui
             p.y = depth.point_cloud_data.point_data[i].y / 100.0f;
             p.z = depth.point_cloud_data.point_data[i].z / 100.0f;
         }
-        // Invalid/saturated flags
-        if (p.distance_mm >= HPS3D_INVALID_DATA || p.distance_mm == 0) {
+        // Classify the pixel using the SDK sentinel values.
+        if (p.distance_mm == 0) {
+            p.status = PixelStatus::Zero;
             p.valid = false;
-        }
-        if (p.distance_mm == HPS3D_SATURATION || p.distance_mm == HPS3D_ADC_OVERFLOW ||
-            p.distance_mm == HPS3D_LOW_AMPLITUDE) {
+        } else if (p.distance_mm == HPS3D_LOW_AMPLITUDE) {
+            p.status = PixelStatus::LowAmplitude;
             p.valid = false;
+        } else if (p.distance_mm == HPS3D_SATURATION) {
+            p.status = PixelStatus::Saturation;
+            p.valid = false;
+        } else if (p.distance_mm == HPS3D_ADC_OVERFLOW) {
+            p.status = PixelStatus::AdcOverflow;
+            p.valid = false;
+        } else if (p.distance_mm >= HPS3D_INVALID_DATA) {
+            p.status = PixelStatus::Invalid;
+            p.valid = false;
+        } else {
+            p.status = PixelStatus::Ok;
+            p.valid = true;
         }
         frame.points.push_back(p);
     }

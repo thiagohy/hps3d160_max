@@ -7,6 +7,7 @@
 #include "filter_config.hpp"
 #include "sdk_bridge.hpp"
 #include "capability_probe.hpp"
+#include "hdr_compare.hpp"
 
 #ifdef HPS3D160_MAX_WITH_ROS
 #include "ros_publisher.hpp"
@@ -20,6 +21,9 @@
 #include <cstring>
 #include <functional>
 #include <fstream>
+#include <memory>
+#include <sstream>
+#include <vector>
 #include <string>
 #include <thread>
 
@@ -40,10 +44,13 @@ static void printUsage(const char* prog) {
     std::printf("  --max-frames N          Stop after N frames (0 = unlimited)\n");
     std::printf("  --probe                 Dump the full hardware capability report (JSON) and exit\n");
     std::printf("  --probe-out FILE        Write the capability report to FILE\n");
+    std::printf("  --hdr-compare [N]       Compare HDR modes (N frames per mode, default 30)\n");
+    std::printf("  --hdr-out FILE          Write the HDR comparison report to FILE\n");
 }
 
 static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, std::string& record_dir,
-                      std::string& format, int& max_frames, bool& probe, std::string& probe_out) {
+                      std::string& format, int& max_frames, bool& probe, std::string& probe_out,
+                      bool& hdr_compare, int& hdr_frames, std::string& hdr_out) {
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--mode" && i + 1 < argc) {
@@ -71,6 +78,14 @@ static bool parseArgs(int argc, char** argv, hps::AppConfig& cfg, bool& single, 
             max_frames = std::stoi(argv[++i]);
         } else if (a == "--probe") {
             probe = true;
+        } else if (a == "--hdr-compare") {
+            hdr_compare = true;
+            if (i + 1 < argc && argv[i + 1][0] != '-') {
+                hdr_frames = std::stoi(argv[++i]);
+            }
+        } else if (a == "--hdr-out" && i + 1 < argc) {
+            hdr_out = argv[++i];
+            hdr_compare = true;
         } else if (a == "--probe-out" && i + 1 < argc) {
             probe_out = argv[++i];
             probe = true;
@@ -102,8 +117,12 @@ int main(int argc, char** argv) {
     int max_frames = 0;
     bool probe = false;
     std::string probe_out;
+    bool hdr_compare = false;
+    int hdr_frames = 30;
+    std::string hdr_out;
 
-    if (!parseArgs(argc, argv, cfg, single, record_dir, format, max_frames, probe, probe_out)) {
+    if (!parseArgs(argc, argv, cfg, single, record_dir, format, max_frames, probe, probe_out,
+                   hdr_compare, hdr_frames, hdr_out)) {
         return 0;
     }
 
@@ -142,6 +161,77 @@ int main(int argc, char** argv) {
             } else {
                 out << json;
                 std::printf("[main] capability report written to %s\n", probe_out.c_str());
+            }
+        }
+        mgr.disconnectAll();
+        return 0;
+    }
+
+    if (hdr_compare) {
+        hps::SdkBridge bridge;
+        if (!bridge.available() || !bridge.bind(mgr.device(0).handle())) {
+            std::fprintf(stderr, "[main] advanced SDK entry points unavailable, cannot switch HDR modes\n");
+            mgr.disconnectAll();
+            return 1;
+        }
+
+        std::unique_ptr<hps::HdrMetricsAccumulator> acc;
+        std::vector<hps::HdrMetrics> results;
+        std::atomic<int> collected{0};
+
+        auto hdr_handler = [&](const hps::PointCloudFrame& frame, const hps::FrameStats&) {
+            if (acc) acc->add(frame);
+            collected++;
+        };
+
+        hps::CaptureService capture(mgr.device(0), hdr_handler);
+
+        std::printf("\nHDR comparison: %d frames per mode\n", hdr_frames);
+        std::printf("%-12s %6s %6s %9s %9s %9s %9s %9s\n", "mode", "frames", "fps", "coverage",
+                    "weak", "satur.", "noise(mm)", "snr");
+
+        for (const auto& spec : hps::HdrComparator::default_modes()) {
+            if (!hps::HdrComparator::apply_mode(bridge, spec.mode)) {
+                std::printf("%-12s  <not supported by this device>\n", spec.name);
+                continue;
+            }
+            acc = std::make_unique<hps::HdrMetricsAccumulator>(spec.name);
+            collected = 0;
+            if (!capture.start()) {
+                std::fprintf(stderr, "[main] failed to start capture for mode %s\n", spec.name);
+                break;
+            }
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
+            while (collected < hdr_frames && std::chrono::steady_clock::now() < deadline) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            capture.stop();
+            hps::HdrMetrics m = acc->finish();
+            results.push_back(m);
+            std::printf("%-12s %6d %6.1f %8.1f%% %8.1f%% %8.1f%% %9.2f %9.1f\n", m.mode.c_str(), m.frames,
+                        m.fps, m.coverage * 100.0, m.low_amplitude_ratio * 100.0,
+                        m.saturated_ratio * 100.0, m.spatial_noise_mm, m.snr_proxy);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+
+        std::ostringstream json;
+        json << "{\n  \"frames_per_mode\": " << hdr_frames << ",\n  \"modes\": [\n";
+        for (std::size_t i = 0; i < results.size(); ++i) {
+            json << "    " << results[i].to_json();
+            if (i + 1 < results.size()) json << ",";
+            json << "\n";
+        }
+        json << "  ]\n}\n";
+
+        if (hdr_out.empty()) {
+            std::printf("%s", json.str().c_str());
+        } else {
+            std::ofstream out(hdr_out);
+            if (!out) {
+                std::fprintf(stderr, "[main] cannot write %s\n", hdr_out.c_str());
+            } else {
+                out << json.str();
+                std::printf("[main] HDR comparison written to %s\n", hdr_out.c_str());
             }
         }
         mgr.disconnectAll();

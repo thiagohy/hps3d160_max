@@ -103,6 +103,18 @@ A real capture from an HPS-3D160-U is kept in `docs/hardware_report.json`.
 
 See `docs/CAPABILITIES.md` for the full hardware capability map.
 
+## HDR comparison (SNR)
+
+```bash
+./build/hps3d160_max_node --port /dev/ttyACM0 --hdr-compare 30 --hdr-out hdr.json
+```
+
+Switches the sensor between `disable` / `auto_hdr` / `super_hdr` / `simple_hdr`
+and reports coverage, weak-signal and saturation ratios, spatial noise
+(std-dev over 8x8 patches), temporal jitter and an SNR proxy per mode.
+A real measurement is stored in `docs/hdr_comparison.json`.
+
+
 ## Notes
 
 - The SDK core is proprietary; only headers and x86_64 Linux libraries are bundled.

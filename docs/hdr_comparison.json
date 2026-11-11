@@ -1,0 +1,61 @@
+{
+  "frames_per_mode": 20,
+  "modes": [
+    {
+    "mode": "disable",
+    "frames": 20,
+    "fps": 36.9178,
+    "coverage": 0.00942708,
+    "low_amplitude_ratio": 0,
+    "saturated_ratio": 0.990573,
+    "invalid_ratio": 0,
+    "mean_distance_mm": 668.365,
+    "min_distance_mm": 610,
+    "spatial_noise_mm": 36.8629,
+    "temporal_jitter_mm": 4.53592,
+    "snr_proxy": 18.1311
+  },
+    {
+    "mode": "auto_hdr",
+    "frames": 20,
+    "fps": 40.597,
+    "coverage": 0.00681771,
+    "low_amplitude_ratio": 0.536198,
+    "saturated_ratio": 0.199573,
+    "invalid_ratio": 0.257411,
+    "mean_distance_mm": 240.22,
+    "min_distance_mm": 158,
+    "spatial_noise_mm": 19.0472,
+    "temporal_jitter_mm": 146.542,
+    "snr_proxy": 12.6118
+  },
+    {
+    "mode": "super_hdr",
+    "frames": 20,
+    "fps": 18.9883,
+    "coverage": 0.433042,
+    "low_amplitude_ratio": 0.0596042,
+    "saturated_ratio": 0.204865,
+    "invalid_ratio": 0.30249,
+    "mean_distance_mm": 467.662,
+    "min_distance_mm": 153,
+    "spatial_noise_mm": 55.2453,
+    "temporal_jitter_mm": 95.0148,
+    "snr_proxy": 8.46519
+  },
+    {
+    "mode": "simple_hdr",
+    "frames": 20,
+    "fps": 21.6352,
+    "coverage": 0.490719,
+    "low_amplitude_ratio": 0.00121354,
+    "saturated_ratio": 0.140177,
+    "invalid_ratio": 0.367891,
+    "mean_distance_mm": 485.76,
+    "min_distance_mm": 162,
+    "spatial_noise_mm": 52.7896,
+    "temporal_jitter_mm": 10.3515,
+    "snr_proxy": 9.20181
+  }
+  ]
+}

@@ -74,6 +74,16 @@ struct AppConfig {
     int device_count = 1;
 };
 
+// Quality flag of a single measured pixel (mirrors the SDK sentinel values).
+enum class PixelStatus : std::uint8_t {
+    Ok = 0,
+    Zero = 1,
+    LowAmplitude = 2,
+    Saturation = 3,
+    AdcOverflow = 4,
+    Invalid = 5
+};
+
 // A single 3D point with distance (mm) and intensity proxy.
 struct Point3D {
     float x = 0.0f; // meters
@@ -81,6 +91,7 @@ struct Point3D {
     float z = 0.0f;
     std::uint16_t distance_mm = 0;
     bool valid = true;
+    PixelStatus status = PixelStatus::Ok;
 };
 
 struct PointCloudFrame {
