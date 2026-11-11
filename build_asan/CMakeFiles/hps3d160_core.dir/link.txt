@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhps3d160_core.a CMakeFiles/hps3d160_core.dir/src/capture_service.cpp.o CMakeFiles/hps3d160_core.dir/src/device_manager.cpp.o CMakeFiles/hps3d160_core.dir/src/filter_config.cpp.o CMakeFiles/hps3d160_core.dir/src/health_monitor.cpp.o CMakeFiles/hps3d160_core.dir/src/multi_camera_manager.cpp.o CMakeFiles/hps3d160_core.dir/src/pointcloud_builder.cpp.o CMakeFiles/hps3d160_core.dir/src/recorder.cpp.o
+/usr/bin/ranlib libhps3d160_core.a

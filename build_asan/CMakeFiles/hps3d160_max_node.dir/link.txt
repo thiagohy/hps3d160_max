@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -O1 -fsanitize=address -fno-omit-frame-pointer -fsanitize=address CMakeFiles/hps3d160_max_node.dir/src/main.cpp.o -o hps3d160_max_node   -L/home/thiagohy/robot/hps3d160_max/third_party/hps_sdk/lib  -Wl,-rpath,/home/thiagohy/robot/hps3d160_max/third_party/hps_sdk/lib: libhps3d160_core.a libhps_sdk.a -lHPS3DSDK64_1-8-6 

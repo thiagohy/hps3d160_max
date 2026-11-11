@@ -50,6 +50,8 @@ private:
 
     ConnectionConfig cfg_;
     int handle_ = -1;
+    HPS3D_MeasureData_t measure_data_{};
+    bool measure_data_inited_ = false;
     std::atomic<bool> connected_{false};
     std::atomic<bool> capturing_{false};
     std::atomic<bool> callback_registered_{false};

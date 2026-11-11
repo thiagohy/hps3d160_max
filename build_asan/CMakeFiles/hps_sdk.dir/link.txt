@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhps_sdk.a CMakeFiles/hps_sdk.dir/third_party/hps_sdk/include/HPS3DUser_IF.c.o
+/usr/bin/ranlib libhps_sdk.a

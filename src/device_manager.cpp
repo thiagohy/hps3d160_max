@@ -27,6 +27,8 @@ bool DeviceManager::connect() {
         connected_ = false;
         return false;
     }
+    HPS3D_MeasureDataInit(&measure_data_);
+    measure_data_inited_ = true;
     connected_ = true;
     std::printf("[DeviceManager] connected (handle=%d)\n", handle_);
     return true;
@@ -37,6 +39,10 @@ void DeviceManager::disconnect() {
         if (capturing_) stopCapture();
         HPS3D_CloseDevice(handle_);
         handle_ = -1;
+    }
+    if (measure_data_inited_) {
+        HPS3D_MeasureDataFree(&measure_data_);
+        measure_data_inited_ = false;
     }
     connected_ = false;
     capturing_ = false;
@@ -143,10 +149,9 @@ void DeviceManager::onRawEvent(int handle, int eventType, std::uint8_t* data, in
     HPS3D_EventType_t type = static_cast<HPS3D_EventType_t>(eventType);
     if (type == HPS3D_SIMPLE_ROI_EVEN || type == HPS3D_FULL_ROI_EVEN ||
         type == HPS3D_SIMPLE_DEPTH_EVEN || type == HPS3D_FULL_DEPTH_EVEN) {
-        HPS3D_MeasureData_t parsed{};
-        HPS3D_ConvertToMeasureData(data, &parsed, type);
+        HPS3D_ConvertToMeasureData(data, &measure_data_, type);
         std::lock_guard<std::mutex> lk(cb_mutex_);
-        if (frame_cb_) frame_cb_(handle, type, parsed);
+        if (frame_cb_) frame_cb_(handle, type, measure_data_);
     } else if (type == HPS3D_DISCONNECT_EVEN) {
         std::fprintf(stderr, "[DeviceManager] device disconnected (handle=%d)\n", handle);
         connected_ = false;
